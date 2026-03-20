@@ -42,7 +42,7 @@ export async function GET(request) {
       })
 
       await resend.emails.send({
-        from: 'Linum Brow <<onboarding@resend.dev>>',
+        from:'Linum Brow <noreply@uumeluuest.resend.app>',
         to: booking.email,
         subject: emailContent.subject,
         html: emailContent.html,
