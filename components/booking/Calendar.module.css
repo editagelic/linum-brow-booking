@@ -1,0 +1,76 @@
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.month {
+  font-family: var(--font-montserrat);
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--title);
+}
+
+.navBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  transition: background 0.15s;
+}
+.navBtn:hover { background: var(--bg); }
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 1px;
+}
+
+.dayName {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--disabled-text);
+  text-align: center;
+  padding-bottom: 10px;
+  font-family: var(--font-montserrat);
+}
+
+.day {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-montserrat);
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.12s;
+  color: var(--text);
+  background: none;
+  border: none;
+  position: relative;
+}
+
+.day:hover:not(.past):not(.empty) { background: var(--primary-light); }
+.day.today { color: #B07A4A; font-weight: 700; }
+.day.selected { background: var(--primary); color: white; font-weight: 600; }
+.day.selected:hover { background: var(--primary); }
+.day.past { color: var(--disabled-text); cursor: not-allowed; }
+.day.empty { cursor: default; }
+
+.dot {
+  position: absolute;
+  bottom: 3px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--primary);
+  opacity: 0.5;
+}

@@ -1,0 +1,188 @@
+.main {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  min-height: calc(100vh - 72px);
+  padding: 48px 20px 80px;
+}
+
+.card {
+  background: var(--white);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  width: 100%;
+  max-width: 900px;
+  padding: 40px 44px 44px;
+  animation: fadeUp 0.3s ease;
+}
+
+.dots { display: flex; gap: 8px; margin-bottom: 28px; }
+
+.dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--disabled-bg);
+  transition: all 0.2s;
+}
+.dot.active { background: var(--primary); }
+.dot.done   { background: var(--primary); opacity: 0.35; }
+
+.title {
+  font-family: var(--font-manrope);
+  font-weight: 600;
+  font-size: clamp(26px, 4vw, 36px);
+  line-height: 125%;
+  color: var(--title);
+  margin-bottom: 28px;
+}
+
+/* Usluge pills */
+.services { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px; }
+
+.servicePill {
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-family: var(--font-montserrat);
+  font-size: 13px;
+  font-weight: 600;
+  border: 1.5px solid var(--border);
+  background: var(--white);
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.12s;
+}
+.servicePill:hover { border-color: var(--primary); color: var(--primary); }
+.servicePill.active { background: var(--primary); border-color: var(--primary); color: white; }
+
+/* Booking box */
+.boxHeader {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  margin-bottom: 10px;
+  padding: 0 2px;
+}
+
+.boxSub {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.boxDate {
+  font-family: var(--font-montserrat);
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--title);
+}
+
+.bookingBox {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  overflow: hidden;
+  margin-bottom: 28px;
+}
+
+.calLeft {
+  padding: 24px 28px 28px;
+  border-right: 1px solid var(--border);
+}
+
+.slotsRight { padding: 24px 28px 28px; }
+
+.btnRow { display: flex; justify-content: flex-end; }
+
+.btnNext {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--primary);
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 14px 36px;
+  font-family: var(--font-montserrat);
+  font-size: 13px;
+  font-weight: 600;
+  color: white;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+}
+.btnNext:hover { background: var(--primary-hover); }
+.btnNext:active { transform: scale(0.98); }
+.btnNext:disabled {
+  background: var(--disabled-bg);
+  color: var(--disabled-text);
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Success */
+.success {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 20px 0 12px;
+}
+
+.successIcon {
+  width: 72px; height: 72px;
+  border-radius: 50%;
+  background: #4CAF76;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 24px;
+  animation: popIn 0.4s cubic-bezier(0.175,0.885,0.32,1.275);
+}
+
+.successTitle {
+  font-family: var(--font-manrope);
+  font-weight: 600;
+  font-size: 28px;
+  color: var(--title);
+  margin-bottom: 10px;
+}
+
+.successSub {
+  font-size: 14px;
+  color: var(--disabled-text);
+  line-height: 1.6;
+  max-width: 360px;
+  margin-bottom: 24px;
+}
+
+.successPill {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px 28px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--title);
+  margin-bottom: 32px;
+}
+
+.btnNew {
+  background: none;
+  border: 1.5px solid var(--primary);
+  border-radius: var(--radius-sm);
+  padding: 13px 32px;
+  font-family: var(--font-montserrat);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--primary);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.btnNew:hover { background: var(--primary); color: white; }
+
+@media (max-width: 680px) {
+  .card { padding: 24px 20px 28px; }
+  .bookingBox { grid-template-columns: 1fr; }
+  .calLeft { border-right: none; border-bottom: 1px solid var(--border); padding: 20px; }
+  .slotsRight { padding: 20px; }
+  .boxHeader { grid-template-columns: 1fr; gap: 4px; }
+}
