@@ -18,6 +18,14 @@ const montserrat = Montserrat({
 export const metadata = {
   title: 'Linum Brow — Rezerviraj termin',
   description: 'Rezervirajte termin za oblikovanje obrva',
+  icons: {
+    icon: [
+      { url: '/logo-linum.png', sizes: '16x16', type: 'image/png' },
+      { url: '/logo-linum.png', sizes: '32x32', type: 'image/png' },
+      { url: '/logo-linum.png' },
+    ],
+    apple: '/apple-touch-icon.png',
+  },
 }
 
 export default function RootLayout({ children }) {
