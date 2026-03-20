@@ -2,26 +2,27 @@ export function bookingConfirmationEmail({ name, dateTime, service, date, time }
 
   // Generiraj ICS sadržaj
  function generateICS() {
-  const dateObj = new Date(date + 'T' + time + ':00')
-  const endObj = new Date(dateObj.getTime() + 45 * 60 * 1000)
+  const [hh, mm] = time.split(':')
+  const [yyyy, mo, dd] = date.split('-')
+  
+  function pad(n) { return String(n).padStart(2,'0') }
+  
+  const startH = parseInt(hh)
+  const startM = parseInt(mm)
+  const endM = startM + 45
+  const endH = startH + Math.floor(endM / 60)
+  const endMin = endM % 60
 
-  function fmtLocal(d) {
-    const yyyy = d.getFullYear()
-    const mm = String(d.getMonth()+1).padStart(2,'0')
-    const dd = String(d.getDate()).padStart(2,'0')
-    const hh = String(d.getHours()).padStart(2,'0')
-    const min = String(d.getMinutes()).padStart(2,'0')
-    const ss = String(d.getSeconds()).padStart(2,'0')
-    return `${yyyy}${mm}${dd}T${hh}${min}${ss}`
-  }
+  const dtStart = `${yyyy}${mo}${dd}T${pad(startH)}${pad(startM)}00`
+  const dtEnd = `${yyyy}${mo}${dd}T${pad(endH)}${pad(endMin)}00`
 
   return [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
     'PRODID:-//Linum Brow//HR',
     'BEGIN:VEVENT',
-    `DTSTART;TZID=Europe/Zagreb:${fmtLocal(dateObj)}`,
-    `DTEND;TZID=Europe/Zagreb:${fmtLocal(endObj)}`,
+    `DTSTART;TZID=Europe/Zagreb:${dtStart}`,
+    `DTEND;TZID=Europe/Zagreb:${dtEnd}`,
     `SUMMARY:${service} — Linum Brow`,
     'DESCRIPTION:Termin kod Linum Brow by Ivana Gelić',
     'LOCATION:Linum Brow',
