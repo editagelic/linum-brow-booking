@@ -16,20 +16,21 @@ export function bookingConfirmationEmail({ name, dateTime, service, date, time }
   const dtStart = `${yyyy}${mo}${dd}T${pad(startH)}${pad(startM)}00`
   const dtEnd = `${yyyy}${mo}${dd}T${pad(endH)}${pad(endMin)}00`
 
-  return [
-    'BEGIN:VCALENDAR',
-    'VERSION:2.0',
-    'PRODID:-//Linum Brow//HR',
-    'BEGIN:VEVENT',
-    `DTSTART;TZID=Europe/Zagreb:${dtStart}`,
-    `DTEND;TZID=Europe/Zagreb:${dtEnd}`,
-    `SUMMARY:${service} — Linum Brow`,
-    'DESCRIPTION:Termin kod Linum Brow by Ivana Gelić',
-    'LOCATION:Linum Brow',
-    'STATUS:CONFIRMED',
-    'END:VEVENT',
-    'END:VCALENDAR'
-  ].join('\r\n')
+return [
+  'BEGIN:VCALENDAR',
+  'VERSION:2.0',
+  'PRODID:-//Linum Brow//HR',
+  'X-WR-TIMEZONE:Europe/Zagreb',
+  'BEGIN:VEVENT',
+  `DTSTART;TZID=Europe/Zagreb:${dtStart}`,
+  `DTEND;TZID=Europe/Zagreb:${dtEnd}`,
+  `SUMMARY:${service} — Linum Brow`,
+  'DESCRIPTION:Termin kod Linum Brow by Ivana Gelić',
+  'LOCATION:Linum Brow',
+  'STATUS:CONFIRMED',
+  'END:VEVENT',
+  'END:VCALENDAR'
+].join('\r\n')
 }
 
   return {
