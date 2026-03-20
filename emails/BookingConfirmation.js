@@ -1,33 +1,35 @@
 export function bookingConfirmationEmail({ name, dateTime, service, date, time }) {
 
   // Generiraj ICS sadržaj
-  function generateICS() {
-    const [datePart, timePart] = dateTime.split(' u ')
-    
-    // Parsiraj datum iz hrvatskog formata
-    const dateObj = new Date(date + 'T' + time + ':00')
-    const endObj = new Date(dateObj.getTime() + 45 * 60 * 1000) // +45 minuta
+ function generateICS() {
+  const dateObj = new Date(date + 'T' + time + ':00')
+  const endObj = new Date(dateObj.getTime() + 45 * 60 * 1000)
 
-    function fmtICS(d) {
-      return d.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z'
-    }
-
-    return [
-      'BEGIN:VCALENDAR',
-      'VERSION:2.0',
-      'PRODID:-//Linum Brow//HR',
-      'BEGIN:VEVENT',
-      `DTSTART:${fmtICS(dateObj)}`,
-      `DTEND:${fmtICS(endObj)}`,
-      `SUMMARY:${service} — Linum Brow`,
-      `DESCRIPTION:Termin kod Linum Brow by Ivana Gelić`,
-      'LOCATION:Linum Brow',
-      `ORGANIZER;CN=Linum Brow:mailto:noreply@linumbrow.hr`,
-      'STATUS:CONFIRMED',
-      'END:VEVENT',
-      'END:VCALENDAR'
-    ].join('\r\n')
+  function fmtLocal(d) {
+    const yyyy = d.getFullYear()
+    const mm = String(d.getMonth()+1).padStart(2,'0')
+    const dd = String(d.getDate()).padStart(2,'0')
+    const hh = String(d.getHours()).padStart(2,'0')
+    const min = String(d.getMinutes()).padStart(2,'0')
+    const ss = String(d.getSeconds()).padStart(2,'0')
+    return `${yyyy}${mm}${dd}T${hh}${min}${ss}`
   }
+
+  return [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//Linum Brow//HR',
+    'BEGIN:VEVENT',
+    `DTSTART;TZID=Europe/Zagreb:${fmtLocal(dateObj)}`,
+    `DTEND;TZID=Europe/Zagreb:${fmtLocal(endObj)}`,
+    `SUMMARY:${service} — Linum Brow`,
+    'DESCRIPTION:Termin kod Linum Brow by Ivana Gelić',
+    'LOCATION:Linum Brow',
+    'STATUS:CONFIRMED',
+    'END:VEVENT',
+    'END:VCALENDAR'
+  ].join('\r\n')
+}
 
   return {
     subject: `Potvrda rezervacije — ${dateTime}`,
