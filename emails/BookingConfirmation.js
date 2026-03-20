@@ -1,4 +1,34 @@
-export function bookingConfirmationEmail({ name, dateTime, service }) {
+export function bookingConfirmationEmail({ name, dateTime, service, date, time }) {
+
+  // Generiraj ICS sadržaj
+  function generateICS() {
+    const [datePart, timePart] = dateTime.split(' u ')
+    
+    // Parsiraj datum iz hrvatskog formata
+    const dateObj = new Date(date + 'T' + time + ':00')
+    const endObj = new Date(dateObj.getTime() + 45 * 60 * 1000) // +45 minuta
+
+    function fmtICS(d) {
+      return d.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z'
+    }
+
+    return [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'PRODID:-//Linum Brow//HR',
+      'BEGIN:VEVENT',
+      `DTSTART:${fmtICS(dateObj)}`,
+      `DTEND:${fmtICS(endObj)}`,
+      `SUMMARY:${service} — Linum Brow`,
+      `DESCRIPTION:Termin kod Linum Brow by Ivana Gelić`,
+      'LOCATION:Linum Brow',
+      `ORGANIZER;CN=Linum Brow:mailto:noreply@linumbrow.hr`,
+      'STATUS:CONFIRMED',
+      'END:VEVENT',
+      'END:VCALENDAR'
+    ].join('\r\n')
+  }
+
   return {
     subject: `Potvrda rezervacije — ${dateTime}`,
     html: `
@@ -11,18 +41,12 @@ export function bookingConfirmationEmail({ name, dateTime, service }) {
             <table width="100%" style="max-width:520px;background:#fff;border-radius:14px;overflow:hidden;">
               
               <tr><td style="background:#523626;padding:28px 36px;">
-                <p style="margin:0;color:#fff;font-size:22px;font-weight:700;letter-spacing:-0.3px;">
-                  Linum Brow
-                </p>
-                <p style="margin:6px 0 0;color:rgba(255,255,255,0.7);font-size:12px;">
-                  by Ivana Gelić
-                </p>
+                <p style="margin:0;color:#fff;font-size:22px;font-weight:700;letter-spacing:-0.3px;">Linum Brow</p>
+                <p style="margin:6px 0 0;color:rgba(255,255,255,0.7);font-size:12px;">by Ivana Gelić</p>
               </td></tr>
 
               <tr><td style="padding:36px 36px 12px;">
-                <p style="margin:0 0 8px;font-size:13px;color:#B5B5B5;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">
-                  Rezervacija potvrđena
-                </p>
+                <p style="margin:0 0 8px;font-size:13px;color:#B5B5B5;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Rezervacija potvrđena</p>
                 <h1 style="margin:0 0 24px;font-size:22px;font-weight:700;color:#212121;line-height:1.3;">
                   Vidimo se uskoro, ${name}!
                 </h1>
@@ -38,9 +62,13 @@ export function bookingConfirmationEmail({ name, dateTime, service }) {
                   </td></tr>
                 </table>
 
-                <p style="margin:0 0 24px;font-size:13px;color:#888;line-height:1.7;">
-                  Dan prije termina dobit ćete podsjetnik na ovaj email. 
-                  Ako trebate otkazati termin, molimo da to učinite <strong style="color:#2F2F2F;">najmanje 24 sata unaprijed</strong>.
+                <p style="margin:0 0 16px;font-size:13px;color:#888;line-height:1.7;">
+                  Dan prije termina dobit ćete podsjetnik na ovaj email.
+                  Ako trebate otkazati, molimo da to učinite <strong style="color:#2F2F2F;">najmanje 24 sata unaprijed</strong>.
+                </p>
+
+                <p style="margin:0 0 24px;font-size:13px;color:#523626;font-weight:600;">
+                  📅 U privitak emaila dodali smo .ics datoteku — kliknite na nju da dodate termin u Google Calendar, Apple Calendar ili Outlook!
                 </p>
               </td></tr>
 
@@ -62,6 +90,7 @@ export function bookingConfirmationEmail({ name, dateTime, service }) {
         </table>
       </body>
       </html>
-    `
+    `,
+    ics: generateICS()
   }
 }
