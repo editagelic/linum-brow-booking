@@ -49,6 +49,7 @@ export async function POST(request) {
     if (error) throw error
 
     // Pošalji email potvrde klijentici
+const dateTime = formatDateHr(slot.date, slot.time.slice(0, 5))
 const emailContent = bookingConfirmationEmail({ 
   name, 
   dateTime, 
@@ -65,8 +66,7 @@ await resend.emails.send({
   attachments: [
     {
       filename: 'termin-linum-brow.ics',
-      content: Buffer.from(emailContent.ics).toString('base64'),
-      type: 'text/calendar',
+      content: emailContent.ics,
     }
   ]
 })
