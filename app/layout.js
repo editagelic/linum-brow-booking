@@ -19,8 +19,8 @@ export const metadata = {
   title: 'Linum Brow — Rezerviraj termin',
   description: 'Rezervirajte termin za oblikovanje obrva',
   icons: {
-    icon: '/images/logo-linum.png',
-    apple: '/images/logo-linum.png',
+    icon: '/favicon.ico',
+    apple: '/favicon.ico',
   },
 }
 
