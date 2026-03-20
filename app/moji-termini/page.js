@@ -43,7 +43,10 @@ export default function MojiTerminiPage() {
       const res = await fetch('/api/cancel', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ bookingId: cancelTarget.id }),
+        body: JSON.stringify({ 
+          bookingId: cancelTarget.id,
+          userEmail: user.email  // dodaj ovo
+        }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)

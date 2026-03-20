@@ -1,25 +1,18 @@
-import { createServerSupabase } from '@/lib/supabase-server'
+import { supabase } from '@/lib/supabase'
 import { resend } from '@/lib/resend'
 import { cancellationAdminEmail } from '@/emails/CancellationNotice'
 import { formatDateHr } from '@/lib/utils'
 
 export async function POST(request) {
   try {
-    const { bookingId } = await request.json()
-    const supabase = await createServerSupabase()
+    const { bookingId, userEmail } = await request.json()
 
-    // Provjeri auth
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      return Response.json({ error: 'Niste prijavljeni' }, { status: 401 })
-    }
-
-    // Dohvati rezervaciju
+    // Dohvati rezervaciju po ID i emailu (bez auth provjere)
     const { data: booking } = await supabase
       .from('bookings')
       .select('*, available_slots(date, time)')
       .eq('id', bookingId)
-      .eq('profile_id', user.id)
+      .eq('email', userEmail)
       .single()
 
     if (!booking) {
@@ -39,7 +32,7 @@ export async function POST(request) {
       )
     }
 
-    // Otkaži rezervaciju
+    // Otkaži
     const { error } = await supabase
       .from('bookings')
       .update({ status: 'cancelled' })
@@ -47,7 +40,7 @@ export async function POST(request) {
 
     if (error) throw error
 
-    // Pošalji email adminu
+    // Email adminu
     const dateTime = formatDateHr(
       booking.available_slots.date,
       booking.available_slots.time.slice(0, 5)
