@@ -41,6 +41,7 @@ export async function POST(request) {
         phone,
         email,
         note,
+        service,
         status: 'confirmed',
       })
       .select()
