@@ -26,7 +26,7 @@ export default function LoginPage() {
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: { 
-        emailRedirectTo: `https://linum-brow-booking.vercel.app/auth/callback`
+        emailRedirectTo: `https://booking.editagelic.com/auth/callback`
       },
     })
 
