@@ -302,6 +302,7 @@ function RasporedPage() {
   const [manualBooking, setManualBooking] = useState(null)
   const [manualForm, setManualForm] = useState({ name: '', phone: '', email: '', note: '', service: '' })
   const [manualSaving, setManualSaving] = useState(false)
+  const [mobileDay, setMobileDay] = useState(0)
 
   const predefinedTimes = ['09:00','09:30','10:00','10:30','11:00','11:30','12:00','13:00','13:30','14:00','14:30','15:00','15:30','16:00','16:30','17:00','17:30']
   const DAYS_HR = ['Pon','Uto','Sri','Čet','Pet','Sub','Ned']
@@ -390,22 +391,18 @@ function RasporedPage() {
     prevStart.setDate(prevStart.getDate() - 7)
     const prevEnd = new Date(weekDays[6])
     prevEnd.setDate(prevEnd.getDate() - 7)
-
     const { data: prevSlots } = await supabase
       .from('available_slots')
       .select('date, time')
       .gte('date', fmtDate(prevStart))
       .lte('date', fmtDate(prevEnd))
-
     if (!prevSlots?.length) { setMsg('Nema termina prošlog tjedna za kopirati'); return }
-
     const inserts = prevSlots.map(s => {
       const parts = s.date.split('-')
       const d = new Date(parseInt(parts[0]), parseInt(parts[1])-1, parseInt(parts[2]))
       d.setDate(d.getDate() + 7)
       return { date: fmtDate(d), time: s.time }
     })
-
     await supabase.from('available_slots').upsert(inserts, { onConflict: 'date,time' })
     setMsg(`Kopirano ${inserts.length} termina s prošlog tjedna!`)
     fetchSlots()
@@ -413,22 +410,17 @@ function RasporedPage() {
   }
 
   async function handleManualBooking() {
-    if (!manualForm.name || !manualForm.phone) {
-      alert('Ime i telefon su obavezni')
-      return
-    }
+    if (!manualForm.name || !manualForm.phone) { alert('Ime i telefon su obavezni'); return }
     setManualSaving(true)
-    const { error } = await supabase
-      .from('bookings')
-      .insert({
-        slot_id: manualBooking.id,
-        full_name: manualForm.name,
-        phone: manualForm.phone,
-        email: manualForm.email || 'nema@email.com',
-        note: manualForm.note,
-        service: manualForm.service,
-        status: 'confirmed',
-      })
+    const { error } = await supabase.from('bookings').insert({
+      slot_id: manualBooking.id,
+      full_name: manualForm.name,
+      phone: manualForm.phone,
+      email: manualForm.email || 'nema@email.com',
+      note: manualForm.note,
+      service: manualForm.service,
+      status: 'confirmed',
+    })
     setManualSaving(false)
     if (error) { alert('Greška: ' + error.message); return }
     setManualBooking(null)
@@ -436,8 +428,99 @@ function RasporedPage() {
     fetchSlots()
   }
 
+  function renderSlot(slot) {
+    const booking = slot.bookings?.find(b => b.status === 'confirmed')
+    const bgColor = slot.is_blocked ? '#FEF0F0' : booking ? 'var(--primary-light)' : '#EAF7EF'
+    const textColor = slot.is_blocked ? '#C0392B' : booking ? 'var(--primary)' : '#2D7A4F'
+    return (
+      <div key={slot.id} style={{ background: bgColor, borderRadius: 6, padding: '4px 6px' }}
+        title={booking ? `${booking.full_name} · ${booking.phone}${booking.note ? '\nNapomena: ' + booking.note : ''}` : slot.is_blocked ? 'Blokirano' : 'Slobodno'}
+      >
+        <p style={{ fontSize: 11, fontWeight: 700, color: textColor }}>{slot.time.slice(0,5)}</p>
+        {booking && (
+          <p style={{ fontSize: 10, color: textColor, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            {booking.full_name.split(' ')[0]}
+          </p>
+        )}
+        {!booking && !slot.is_blocked && (
+          <div style={{ display: 'flex', gap: 3, marginTop: 2 }}>
+            <button onClick={() => setManualBooking(slot)}
+              style={{ fontSize: 9, padding: '1px 4px', borderRadius: 3, border: 'none', background: 'rgba(0,0,0,0.1)', cursor: 'pointer', color: textColor, fontWeight: 600 }}>
+              + dodaj
+            </button>
+            <button onClick={() => handleBlock(slot.id, slot.is_blocked)}
+              style={{ fontSize: 9, padding: '1px 4px', borderRadius: 3, border: 'none', background: 'rgba(0,0,0,0.1)', cursor: 'pointer', color: textColor, fontWeight: 600 }}>
+              ✕
+            </button>
+            <button onClick={() => handleDelete(slot.id)}
+              style={{ fontSize: 9, padding: '1px 4px', borderRadius: 3, border: 'none', background: 'rgba(0,0,0,0.1)', cursor: 'pointer', color: '#d94f4f', fontWeight: 600 }}>
+              🗑
+            </button>
+          </div>
+        )}
+        {!booking && slot.is_blocked && (
+          <div style={{ display: 'flex', gap: 3, marginTop: 2 }}>
+            <button onClick={() => handleBlock(slot.id, slot.is_blocked)}
+              style={{ fontSize: 9, padding: '1px 4px', borderRadius: 3, border: 'none', background: 'rgba(0,0,0,0.1)', cursor: 'pointer', color: textColor, fontWeight: 600 }}>
+              ↩
+            </button>
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  function renderMobileSlot(slot) {
+    const booking = slot.bookings?.find(b => b.status === 'confirmed')
+    const bgColor = slot.is_blocked ? '#FEF0F0' : booking ? 'var(--primary-light)' : '#EAF7EF'
+    const textColor = slot.is_blocked ? '#C0392B' : booking ? 'var(--primary)' : '#2D7A4F'
+    return (
+      <div key={slot.id} style={{ background: bgColor, borderRadius: 8, padding: '12px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+        <div>
+          <p style={{ fontSize: 15, fontWeight: 700, color: textColor }}>{slot.time.slice(0,5)}</p>
+          {booking && <p style={{ fontSize: 13, color: textColor, marginTop: 2 }}>{booking.full_name} · {booking.phone}</p>}
+          {!booking && !slot.is_blocked && <p style={{ fontSize: 12, color: textColor }}>Slobodan termin</p>}
+          {slot.is_blocked && <p style={{ fontSize: 12, color: textColor }}>Blokirano</p>}
+        </div>
+        <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+          {!booking && !slot.is_blocked && (
+            <>
+              <button onClick={() => setManualBooking(slot)}
+                style={{ fontSize: 12, padding: '6px 10px', borderRadius: 6, border: 'none', background: 'var(--primary)', cursor: 'pointer', color: 'white', fontWeight: 600 }}>
+                + dodaj
+              </button>
+              <button onClick={() => handleBlock(slot.id, slot.is_blocked)}
+                style={{ fontSize: 12, padding: '6px 10px', borderRadius: 6, border: '1px solid var(--border)', background: 'white', cursor: 'pointer', color: textColor, fontWeight: 600 }}>
+                Blokiraj
+              </button>
+              <button onClick={() => handleDelete(slot.id)}
+                style={{ fontSize: 12, padding: '6px 10px', borderRadius: 6, border: '1px solid #d94f4f', background: 'white', cursor: 'pointer', color: '#d94f4f', fontWeight: 600 }}>
+                Briši
+              </button>
+            </>
+          )}
+          {!booking && slot.is_blocked && (
+            <button onClick={() => handleBlock(slot.id, slot.is_blocked)}
+              style={{ fontSize: 12, padding: '6px 10px', borderRadius: 6, border: '1px solid var(--border)', background: 'white', cursor: 'pointer', color: 'var(--primary)', fontWeight: 600 }}>
+              Odblokiraj
+            </button>
+          )}
+        </div>
+      </div>
+    )
+  }
+
   return (
     <>
+      <style>{`
+        .raspored-desktop { display: block; }
+        .raspored-mobile { display: none; }
+        @media (max-width: 640px) {
+          .raspored-desktop { display: none; }
+          .raspored-mobile { display: block; }
+        }
+      `}</style>
+
       <h1 style={{ fontFamily: 'var(--font-manrope)', fontWeight: 600, fontSize: 28, color: 'var(--title)', marginBottom: 24 }}>
         Raspored
       </h1>
@@ -457,99 +540,69 @@ function RasporedPage() {
         </button>
       </div>
 
-      <div style={{ background: 'var(--white)', borderRadius: 'var(--radius)', border: '1px solid var(--border)', overflow: 'hidden', marginBottom: 24 }}>
+      {/* ── DESKTOP: 7 stupaca ── */}
+      <div className="raspored-desktop" style={{ background: 'var(--white)', borderRadius: 'var(--radius)', border: '1px solid var(--border)', overflow: 'hidden', marginBottom: 24 }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', borderBottom: '1px solid var(--border)' }}>
           {weekDays.map((d, i) => {
             const isToday = fmtDate(d) === fmtDate(new Date())
             return (
-              <div key={i} style={{
-                padding: '12px 8px', textAlign: 'center',
-                borderRight: i < 6 ? '1px solid var(--border)' : 'none',
-                background: isToday ? 'var(--primary-light)' : 'transparent'
-              }}>
-                <p style={{ fontSize: 11, fontWeight: 600, color: isToday ? 'var(--primary)' : 'var(--disabled-text)', marginBottom: 2 }}>
-                  {DAYS_HR[i]}
-                </p>
-                <p style={{ fontSize: 14, fontWeight: 600, color: isToday ? 'var(--primary)' : 'var(--title)' }}>
-                  {d.getDate()}.{d.getMonth()+1}.
-                </p>
+              <div key={i} style={{ padding: '12px 8px', textAlign: 'center', borderRight: i < 6 ? '1px solid var(--border)' : 'none', background: isToday ? 'var(--primary-light)' : 'transparent' }}>
+                <p style={{ fontSize: 11, fontWeight: 600, color: isToday ? 'var(--primary)' : 'var(--disabled-text)', marginBottom: 2 }}>{DAYS_HR[i]}</p>
+                <p style={{ fontSize: 14, fontWeight: 600, color: isToday ? 'var(--primary)' : 'var(--title)' }}>{d.getDate()}.{d.getMonth()+1}.</p>
               </div>
             )
           })}
         </div>
-
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', minHeight: 200 }}>
           {weekDays.map((d, i) => {
             const daySlots = getSlotsForDay(d)
             return (
-              <div key={i} style={{
-                padding: '8px 6px',
-                borderRight: i < 6 ? '1px solid var(--border)' : 'none',
-                display: 'flex', flexDirection: 'column', gap: 4
-              }}>
+              <div key={i} style={{ padding: '8px 6px', borderRight: i < 6 ? '1px solid var(--border)' : 'none', display: 'flex', flexDirection: 'column', gap: 4 }}>
                 {loading ? (
                   <p style={{ fontSize: 11, color: 'var(--disabled-text)', textAlign: 'center', padding: '8px 0' }}>...</p>
                 ) : daySlots.length === 0 ? (
                   <p style={{ fontSize: 11, color: 'var(--disabled-text)', textAlign: 'center', padding: '8px 0' }}>—</p>
-                ) : (
-                  daySlots.map(slot => {
-                    const booking = slot.bookings?.find(b => b.status === 'confirmed')
-                    const bgColor = slot.is_blocked ? '#FEF0F0' : booking ? 'var(--primary-light)' : '#EAF7EF'
-                    const textColor = slot.is_blocked ? '#C0392B' : booking ? 'var(--primary)' : '#2D7A4F'
-                    return (
-                      <div key={slot.id} style={{ background: bgColor, borderRadius: 6, padding: '4px 6px' }}
-                        title={booking ? `${booking.full_name} · ${booking.phone}${booking.note ? '\nNapomena: ' + booking.note : ''}` : slot.is_blocked ? 'Blokirano' : 'Slobodno'}
-                      >
-                        <p style={{ fontSize: 11, fontWeight: 700, color: textColor }}>
-                          {slot.time.slice(0,5)}
-                        </p>
-                        {booking && (
-                          <p style={{ fontSize: 10, color: textColor, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                            {booking.full_name.split(' ')[0]}
-                          </p>
-                        )}
-                        {!booking && !slot.is_blocked && (
-                          <div style={{ display: 'flex', gap: 3, marginTop: 2 }}>
-                            <button
-                              onClick={() => setManualBooking(slot)}
-                              style={{ fontSize: 9, padding: '1px 4px', borderRadius: 3, border: 'none', background: 'rgba(0,0,0,0.1)', cursor: 'pointer', color: textColor, fontWeight: 600 }}
-                            >
-                              + dodaj
-                            </button>
-                            <button
-                              onClick={() => handleBlock(slot.id, slot.is_blocked)}
-                              style={{ fontSize: 9, padding: '1px 4px', borderRadius: 3, border: 'none', background: 'rgba(0,0,0,0.1)', cursor: 'pointer', color: textColor, fontWeight: 600 }}
-                            >
-                              ✕
-                            </button>
-                            <button
-                              onClick={() => handleDelete(slot.id)}
-                              style={{ fontSize: 9, padding: '1px 4px', borderRadius: 3, border: 'none', background: 'rgba(0,0,0,0.1)', cursor: 'pointer', color: '#d94f4f', fontWeight: 600 }}
-                            >
-                              🗑
-                            </button>
-                          </div>
-                        )}
-                        {!booking && slot.is_blocked && (
-                          <div style={{ display: 'flex', gap: 3, marginTop: 2 }}>
-                            <button
-                              onClick={() => handleBlock(slot.id, slot.is_blocked)}
-                              style={{ fontSize: 9, padding: '1px 4px', borderRadius: 3, border: 'none', background: 'rgba(0,0,0,0.1)', cursor: 'pointer', color: textColor, fontWeight: 600 }}
-                            >
-                              ↩
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    )
-                  })
-                )}
+                ) : daySlots.map(slot => renderSlot(slot))}
               </div>
             )
           })}
         </div>
       </div>
 
+      {/* ── MOBILE: jedan dan ── */}
+      <div className="raspored-mobile" style={{ background: 'var(--white)', borderRadius: 'var(--radius)', border: '1px solid var(--border)', overflow: 'hidden', marginBottom: 24 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', borderBottom: '1px solid var(--border)' }}>
+          <button
+            onClick={() => setMobileDay(d => Math.max(0, d - 1))}
+            disabled={mobileDay === 0}
+            style={{ background: 'none', border: 'none', cursor: mobileDay === 0 ? 'default' : 'pointer', fontSize: 20, color: mobileDay === 0 ? 'var(--disabled-text)' : 'var(--primary)', padding: '4px 8px', fontWeight: 600 }}
+          >
+            ←
+          </button>
+          <div style={{ textAlign: 'center' }}>
+            <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--disabled-text)' }}>{DAYS_HR[mobileDay]}</p>
+            <p style={{ fontSize: 16, fontWeight: 600, color: 'var(--title)' }}>
+              {weekDays[mobileDay].getDate()}.{weekDays[mobileDay].getMonth()+1}.{weekDays[mobileDay].getFullYear()}.
+            </p>
+          </div>
+          <button
+            onClick={() => setMobileDay(d => Math.min(6, d + 1))}
+            disabled={mobileDay === 6}
+            style={{ background: 'none', border: 'none', cursor: mobileDay === 6 ? 'default' : 'pointer', fontSize: 20, color: mobileDay === 6 ? 'var(--disabled-text)' : 'var(--primary)', padding: '4px 8px', fontWeight: 600 }}
+          >
+            →
+          </button>
+        </div>
+        <div style={{ padding: '12px 16px', minHeight: 150, display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {loading ? (
+            <p style={{ fontSize: 13, color: 'var(--disabled-text)', textAlign: 'center', padding: 24 }}>...</p>
+          ) : getSlotsForDay(weekDays[mobileDay]).length === 0 ? (
+            <p style={{ fontSize: 13, color: 'var(--disabled-text)', textAlign: 'center', padding: 24 }}>Nema termina</p>
+          ) : getSlotsForDay(weekDays[mobileDay]).map(slot => renderMobileSlot(slot))}
+        </div>
+      </div>
+
+      {/* Dodaj termine */}
       <div style={{ background: 'var(--white)', borderRadius: 'var(--radius)', border: '1px solid var(--border)', padding: 24 }}>
         <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--title)', marginBottom: 16 }}>Dodaj termine</p>
         <div style={{ marginBottom: 16 }}>
@@ -600,22 +653,15 @@ function RasporedPage() {
 
       {/* Manual booking modal */}
       {manualBooking && (
-        <div style={{
-          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.35)',
-          zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20
-        }} onClick={e => { if (e.target === e.currentTarget) setManualBooking(null) }}>
-          <div style={{
-            background: 'var(--white)', borderRadius: 'var(--radius)',
-            padding: 32, width: '100%', maxWidth: 440,
-            boxShadow: '0 8px 40px rgba(0,0,0,0.15)'
-          }}>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.35)', zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
+          onClick={e => { if (e.target === e.currentTarget) setManualBooking(null) }}>
+          <div style={{ background: 'var(--white)', borderRadius: 'var(--radius)', padding: 32, width: '100%', maxWidth: 440, boxShadow: '0 8px 40px rgba(0,0,0,0.15)' }}>
             <h2 style={{ fontFamily: 'var(--font-manrope)', fontWeight: 600, fontSize: 18, color: 'var(--title)', marginBottom: 6 }}>
               Ručno dodaj rezervaciju
             </h2>
             <p style={{ fontSize: 13, color: 'var(--disabled-text)', marginBottom: 20 }}>
               {manualBooking.date} u {manualBooking.time.slice(0,5)}
             </p>
-
             {[
               { label: 'Ime i prezime *', key: 'name', placeholder: 'Ana Horvat', type: 'text' },
               { label: 'Broj telefona *', key: 'phone', placeholder: '+385 91 234 5678', type: 'tel' },
@@ -624,46 +670,20 @@ function RasporedPage() {
               { label: 'Napomena', key: 'note', placeholder: 'Dodatna napomena...', type: 'text' },
             ].map(({ label, key, placeholder, type }) => (
               <div key={key} style={{ marginBottom: 12 }}>
-                <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--title)', display: 'block', marginBottom: 5 }}>
-                  {label}
-                </label>
-                <input
-                  type={type}
-                  placeholder={placeholder}
-                  value={manualForm[key]}
+                <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--title)', display: 'block', marginBottom: 5 }}>{label}</label>
+                <input type={type} placeholder={placeholder} value={manualForm[key]}
                   onChange={e => setManualForm(f => ({ ...f, [key]: e.target.value }))}
-                  style={{
-                    fontFamily: 'var(--font-montserrat)', fontSize: 14,
-                    border: '1.5px solid var(--border)', borderRadius: 'var(--radius-sm)',
-                    padding: '10px 14px', outline: 'none', width: '100%'
-                  }}
+                  style={{ fontFamily: 'var(--font-montserrat)', fontSize: 14, border: '1.5px solid var(--border)', borderRadius: 'var(--radius-sm)', padding: '10px 14px', outline: 'none', width: '100%' }}
                 />
               </div>
             ))}
-
             <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
-              <button
-                onClick={() => setManualBooking(null)}
-                style={{
-                  flex: 1, padding: 12, background: 'var(--white)',
-                  border: '1.5px solid var(--border)', borderRadius: 'var(--radius-sm)',
-                  fontFamily: 'var(--font-montserrat)', fontSize: 13, fontWeight: 600,
-                  color: 'var(--text)', cursor: 'pointer'
-                }}
-              >
+              <button onClick={() => setManualBooking(null)}
+                style={{ flex: 1, padding: 12, background: 'var(--white)', border: '1.5px solid var(--border)', borderRadius: 'var(--radius-sm)', fontFamily: 'var(--font-montserrat)', fontSize: 13, fontWeight: 600, color: 'var(--text)', cursor: 'pointer' }}>
                 Odustani
               </button>
-              <button
-                onClick={handleManualBooking}
-                disabled={manualSaving}
-                style={{
-                  flex: 1, padding: 12, background: 'var(--primary)',
-                  border: 'none', borderRadius: 'var(--radius-sm)',
-                  fontFamily: 'var(--font-montserrat)', fontSize: 13, fontWeight: 600,
-                  color: 'white', cursor: 'pointer',
-                  opacity: manualSaving ? 0.6 : 1
-                }}
-              >
+              <button onClick={handleManualBooking} disabled={manualSaving}
+                style={{ flex: 1, padding: 12, background: 'var(--primary)', border: 'none', borderRadius: 'var(--radius-sm)', fontFamily: 'var(--font-montserrat)', fontSize: 13, fontWeight: 600, color: 'white', cursor: 'pointer', opacity: manualSaving ? 0.6 : 1 }}>
                 {manualSaving ? 'Spremanje...' : 'Spremi rezervaciju'}
               </button>
             </div>
