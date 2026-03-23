@@ -64,7 +64,7 @@ export async function POST(request) {
     return Response.json({ success: true })
 
   } catch (error) {
-    console.error('Cancel error:', error)
+   
     return Response.json({ error: 'Greška pri otkazivanju' }, { status: 500 })
   }
 }

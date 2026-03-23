@@ -91,7 +91,7 @@ await resend.emails.send({
     return Response.json({ success: true, booking })
 
   } catch (error) {
-    console.error('Booking error:', error)
+   
     return Response.json({ error: 'Greška pri rezervaciji' }, { status: 500 })
   }
 }

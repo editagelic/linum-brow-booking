@@ -9,7 +9,6 @@ import BookingForm from '@/components/booking/BookingForm'
 import styles from './page.module.css'
 
 export default function Home() {
-  console.log(supabase)
   const [step, setStep] = useState(1)
   const [user, setUser] = useState(null)
   const [availableDates, setAvailableDates] = useState([])
@@ -32,20 +31,18 @@ export default function Home() {
 
 async function fetchAvailableDates() {
     const today = new Date().toISOString().split('T')[0]
-    console.log('TODAY:', today)
+   
     
     const { data, error } = await supabase
       .from('available_slots')
       .select('date')
       .gte('date', today)
       .eq('is_blocked', false)
-    
-    console.log('SLOTS DATA:', data)
-    console.log('SLOTS ERROR:', error)
+
     
     if (data) {
       const dates = [...new Set(data.map(s => s.date))]
-      console.log('AVAILABLE DATES:', dates)
+    
       setAvailableDates(dates)
     }
   }

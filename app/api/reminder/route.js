@@ -53,7 +53,7 @@ export async function GET(request) {
     return Response.json({ sent })
 
   } catch (error) {
-    console.error('Reminder error:', error)
+ 
     return Response.json({ error: 'Greška' }, { status: 500 })
   }
 }
