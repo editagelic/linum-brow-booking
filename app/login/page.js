@@ -64,7 +64,7 @@ export default function LoginPage() {
     <div className={styles.page}>
       <nav className={styles.nav}>
         <Link href="/">
-          <Image src="/logo-linum.png" alt="Linum Brow" width={80} height={56} className={styles.logo} priority />
+          <Image src="/logo-linum.png" alt="Linum Brow" width={80} height={56} style={{ width: 'auto', height: '56px', objectFit: 'contain' }}  priority />
         </Link>
       </nav>
 
