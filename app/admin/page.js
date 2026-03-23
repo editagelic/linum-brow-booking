@@ -299,6 +299,9 @@ function RasporedPage() {
   const [addTimes, setAddTimes] = useState([])
   const [msg, setMsg] = useState('')
   const [saving, setSaving] = useState(false)
+  const [manualBooking, setManualBooking] = useState(null)
+  const [manualForm, setManualForm] = useState({ name: '', phone: '', email: '', note: '', service: '' })
+  const [manualSaving, setManualSaving] = useState(false)
 
   const predefinedTimes = ['09:00','09:30','10:00','10:30','11:00','11:30','12:00','13:00','13:30','14:00','14:30','15:00','15:30','16:00','16:30','17:00','17:30']
   const DAYS_HR = ['Pon','Uto','Sri','Čet','Pet','Sub','Ned']
@@ -409,13 +412,37 @@ function RasporedPage() {
     setTimeout(() => setMsg(''), 3000)
   }
 
+  async function handleManualBooking() {
+    if (!manualForm.name || !manualForm.phone) {
+      alert('Ime i telefon su obavezni')
+      return
+    }
+    setManualSaving(true)
+    const { error } = await supabase
+      .from('bookings')
+      .insert({
+        slot_id: manualBooking.id,
+        full_name: manualForm.name,
+        phone: manualForm.phone,
+        email: manualForm.email || 'nema@email.com',
+        note: manualForm.note,
+        service: manualForm.service,
+        status: 'confirmed',
+      })
+    setManualSaving(false)
+    if (error) { alert('Greška: ' + error.message); return }
+    setManualBooking(null)
+    setManualForm({ name: '', phone: '', email: '', note: '', service: '' })
+    fetchSlots()
+  }
+
   return (
     <>
       <h1 style={{ fontFamily: 'var(--font-manrope)', fontWeight: 600, fontSize: 28, color: 'var(--title)', marginBottom: 24 }}>
         Raspored
       </h1>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 20 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 20, flexWrap: 'wrap' }}>
         <button onClick={() => setWeekOffset(o => o - 1)} style={{ background: 'var(--white)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', padding: '8px 14px', cursor: 'pointer', fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>
           ← Prethodni
         </button>
@@ -470,10 +497,7 @@ function RasporedPage() {
                     const bgColor = slot.is_blocked ? '#FEF0F0' : booking ? 'var(--primary-light)' : '#EAF7EF'
                     const textColor = slot.is_blocked ? '#C0392B' : booking ? 'var(--primary)' : '#2D7A4F'
                     return (
-                      <div key={slot.id} style={{
-                        background: bgColor, borderRadius: 6,
-                        padding: '4px 6px', cursor: 'pointer'
-                      }}
+                      <div key={slot.id} style={{ background: bgColor, borderRadius: 6, padding: '4px 6px' }}
                         title={booking ? `${booking.full_name} · ${booking.phone}${booking.note ? '\nNapomena: ' + booking.note : ''}` : slot.is_blocked ? 'Blokirano' : 'Slobodno'}
                       >
                         <p style={{ fontSize: 11, fontWeight: 700, color: textColor }}>
@@ -484,19 +508,35 @@ function RasporedPage() {
                             {booking.full_name.split(' ')[0]}
                           </p>
                         )}
-                        {!booking && (
+                        {!booking && !slot.is_blocked && (
                           <div style={{ display: 'flex', gap: 3, marginTop: 2 }}>
+                            <button
+                              onClick={() => setManualBooking(slot)}
+                              style={{ fontSize: 9, padding: '1px 4px', borderRadius: 3, border: 'none', background: 'rgba(0,0,0,0.1)', cursor: 'pointer', color: textColor, fontWeight: 600 }}
+                            >
+                              + dodaj
+                            </button>
                             <button
                               onClick={() => handleBlock(slot.id, slot.is_blocked)}
                               style={{ fontSize: 9, padding: '1px 4px', borderRadius: 3, border: 'none', background: 'rgba(0,0,0,0.1)', cursor: 'pointer', color: textColor, fontWeight: 600 }}
                             >
-                              {slot.is_blocked ? '↩' : '✕'}
+                              ✕
                             </button>
                             <button
                               onClick={() => handleDelete(slot.id)}
                               style={{ fontSize: 9, padding: '1px 4px', borderRadius: 3, border: 'none', background: 'rgba(0,0,0,0.1)', cursor: 'pointer', color: '#d94f4f', fontWeight: 600 }}
                             >
                               🗑
+                            </button>
+                          </div>
+                        )}
+                        {!booking && slot.is_blocked && (
+                          <div style={{ display: 'flex', gap: 3, marginTop: 2 }}>
+                            <button
+                              onClick={() => handleBlock(slot.id, slot.is_blocked)}
+                              style={{ fontSize: 9, padding: '1px 4px', borderRadius: 3, border: 'none', background: 'rgba(0,0,0,0.1)', cursor: 'pointer', color: textColor, fontWeight: 600 }}
+                            >
+                              ↩
                             </button>
                           </div>
                         )}
@@ -512,18 +552,12 @@ function RasporedPage() {
 
       <div style={{ background: 'var(--white)', borderRadius: 'var(--radius)', border: '1px solid var(--border)', padding: 24 }}>
         <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--title)', marginBottom: 16 }}>Dodaj termine</p>
-
         <div style={{ marginBottom: 16 }}>
           <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--title)', display: 'block', marginBottom: 6 }}>Datum</label>
-          <input
-            type="date"
-            value={addDate}
-            onChange={e => setAddDate(e.target.value)}
-            min={fmtDate(new Date())}
+          <input type="date" value={addDate} onChange={e => setAddDate(e.target.value)} min={fmtDate(new Date())}
             style={{ fontFamily: 'var(--font-montserrat)', fontSize: 14, border: '1.5px solid var(--border)', borderRadius: 'var(--radius-sm)', padding: '10px 14px', outline: 'none', width: 200 }}
           />
         </div>
-
         <div style={{ marginBottom: 20 }}>
           <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--title)', display: 'block', marginBottom: 10 }}>Odaberi sate</label>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
@@ -541,13 +575,11 @@ function RasporedPage() {
             ))}
           </div>
         </div>
-
         {msg && (
           <p style={{ fontSize: 13, color: msg.includes('Greška') || msg.includes('Nema') ? '#d94f4f' : '#2D7A4F', fontWeight: 600, marginBottom: 12 }}>
             {msg}
           </p>
         )}
-
         <button onClick={handleAddSlots} disabled={saving} style={{
           padding: '12px 28px', background: 'var(--primary)', border: 'none',
           borderRadius: 'var(--radius-sm)', fontFamily: 'var(--font-montserrat)',
@@ -565,6 +597,79 @@ function RasporedPage() {
           </div>
         ))}
       </div>
+
+      {/* Manual booking modal */}
+      {manualBooking && (
+        <div style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.35)',
+          zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20
+        }} onClick={e => { if (e.target === e.currentTarget) setManualBooking(null) }}>
+          <div style={{
+            background: 'var(--white)', borderRadius: 'var(--radius)',
+            padding: 32, width: '100%', maxWidth: 440,
+            boxShadow: '0 8px 40px rgba(0,0,0,0.15)'
+          }}>
+            <h2 style={{ fontFamily: 'var(--font-manrope)', fontWeight: 600, fontSize: 18, color: 'var(--title)', marginBottom: 6 }}>
+              Ručno dodaj rezervaciju
+            </h2>
+            <p style={{ fontSize: 13, color: 'var(--disabled-text)', marginBottom: 20 }}>
+              {manualBooking.date} u {manualBooking.time.slice(0,5)}
+            </p>
+
+            {[
+              { label: 'Ime i prezime *', key: 'name', placeholder: 'Ana Horvat', type: 'text' },
+              { label: 'Broj telefona *', key: 'phone', placeholder: '+385 91 234 5678', type: 'tel' },
+              { label: 'Email (opcionalno)', key: 'email', placeholder: 'ana@email.com', type: 'email' },
+              { label: 'Usluga', key: 'service', placeholder: 'Čupanje obrva', type: 'text' },
+              { label: 'Napomena', key: 'note', placeholder: 'Dodatna napomena...', type: 'text' },
+            ].map(({ label, key, placeholder, type }) => (
+              <div key={key} style={{ marginBottom: 12 }}>
+                <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--title)', display: 'block', marginBottom: 5 }}>
+                  {label}
+                </label>
+                <input
+                  type={type}
+                  placeholder={placeholder}
+                  value={manualForm[key]}
+                  onChange={e => setManualForm(f => ({ ...f, [key]: e.target.value }))}
+                  style={{
+                    fontFamily: 'var(--font-montserrat)', fontSize: 14,
+                    border: '1.5px solid var(--border)', borderRadius: 'var(--radius-sm)',
+                    padding: '10px 14px', outline: 'none', width: '100%'
+                  }}
+                />
+              </div>
+            ))}
+
+            <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
+              <button
+                onClick={() => setManualBooking(null)}
+                style={{
+                  flex: 1, padding: 12, background: 'var(--white)',
+                  border: '1.5px solid var(--border)', borderRadius: 'var(--radius-sm)',
+                  fontFamily: 'var(--font-montserrat)', fontSize: 13, fontWeight: 600,
+                  color: 'var(--text)', cursor: 'pointer'
+                }}
+              >
+                Odustani
+              </button>
+              <button
+                onClick={handleManualBooking}
+                disabled={manualSaving}
+                style={{
+                  flex: 1, padding: 12, background: 'var(--primary)',
+                  border: 'none', borderRadius: 'var(--radius-sm)',
+                  fontFamily: 'var(--font-montserrat)', fontSize: 13, fontWeight: 600,
+                  color: 'white', cursor: 'pointer',
+                  opacity: manualSaving ? 0.6 : 1
+                }}
+              >
+                {manualSaving ? 'Spremanje...' : 'Spremi rezervaciju'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   )
 }
