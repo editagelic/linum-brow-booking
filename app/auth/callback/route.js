@@ -1,4 +1,4 @@
-import { createServerSupabase } from '@/lib/supabase-server'
+import { supabase } from '@/lib/supabase'
 import { NextResponse } from 'next/server'
 
 export async function GET(request) {
@@ -6,8 +6,6 @@ export async function GET(request) {
   const code = searchParams.get('code')
   const token_hash = searchParams.get('token_hash')
   const type = searchParams.get('type')
-
-  const supabase = await createServerSupabase()
 
   if (code) {
     await supabase.auth.exchangeCodeForSession(code)
@@ -19,7 +17,3 @@ export async function GET(request) {
 
   return NextResponse.redirect(`${origin}/moji-termini`)
 }
-```
-
-Zatim idi na Supabase → **Authentication → URL Configuration** i postavi redirect URL na:
-```
