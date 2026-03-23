@@ -60,7 +60,7 @@ const emailContent = bookingConfirmationEmail({
 })
 
 await resend.emails.send({
-  from:'Linum Brow <noreply@uumeluuest.resend.app>',
+  from:'Linum Brow <noreply@booking.editagelic.com>',
   to: email,
   subject: emailContent.subject,
   html: emailContent.html,
@@ -74,7 +74,7 @@ await resend.emails.send({
 
     // Pošalji obavijest adminu
     await resend.emails.send({
-      from:'Linum Brow <noreply@uumeluuest.resend.app>',
+      from:'Linum Brow <noreply@booking.editagelic.com>',
       to: process.env.ADMIN_EMAIL,
       subject: `Nova rezervacija — ${name} — ${dateTime}`,
       html: `

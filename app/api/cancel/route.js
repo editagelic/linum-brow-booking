@@ -55,7 +55,7 @@ export async function POST(request) {
     })
 
     await resend.emails.send({
-      from:'Linum Brow <noreply@uumeluuest.resend.app>',
+      from:'Linum Brow <noreply@booking.editagelic.com>',
       to: process.env.ADMIN_EMAIL,
       subject: emailContent.subject,
       html: emailContent.html,
